@@ -12,3 +12,5 @@
 + Train the model while cross validating and storing the weights
 + Adv Patch
 + Generate Plots and store `.jpeg` in `plots` dir.
++ Add `.zip` file of data to drive and add `download.sh` script in `data` folder for downloading data from drive.
++ The above point for `Model_weights`.
