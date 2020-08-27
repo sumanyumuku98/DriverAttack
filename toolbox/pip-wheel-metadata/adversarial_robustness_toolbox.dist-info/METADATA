@@ -1,0 +1,131 @@
+Metadata-Version: 2.1
+Name: adversarial-robustness-toolbox
+Version: 1.3.1
+Summary: Toolbox for adversarial machine learning.
+Home-page: https://github.com/IBM/adversarial-robustness-toolbox
+Author: Irina Nicolae
+Author-email: irinutza.n@gmail.com
+Maintainer: Beat Buesser
+Maintainer-email: beat.buesser@ie.ibm.com
+License: MIT
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: scipy (==1.4.1)
+Requires-Dist: matplotlib
+Requires-Dist: scikit-learn (==0.22.1)
+Requires-Dist: six
+Requires-Dist: setuptools
+Requires-Dist: Pillow
+Requires-Dist: tqdm
+Requires-Dist: statsmodels
+Requires-Dist: pydub
+Requires-Dist: resampy
+Requires-Dist: ffmpeg-python
+Requires-Dist: cma
+Requires-Dist: mypy
+Provides-Extra: all
+Requires-Dist: mxnet ; extra == 'all'
+Requires-Dist: catboost ; extra == 'all'
+Requires-Dist: lightgbm ; extra == 'all'
+Requires-Dist: tensorflow ; extra == 'all'
+Requires-Dist: tensorflow-addons ; extra == 'all'
+Requires-Dist: h5py ; extra == 'all'
+Requires-Dist: torch ; extra == 'all'
+Requires-Dist: torchvision ; extra == 'all'
+Requires-Dist: xgboost ; extra == 'all'
+Provides-Extra: catboost
+Requires-Dist: catboost ; extra == 'catboost'
+Provides-Extra: docs
+Requires-Dist: sphinx (>=1.4) ; extra == 'docs'
+Requires-Dist: sphinx-rtd-theme ; extra == 'docs'
+Requires-Dist: sphinx-autodoc-annotation ; extra == 'docs'
+Requires-Dist: sphinx-autodoc-typehints ; extra == 'docs'
+Requires-Dist: matplotlib ; extra == 'docs'
+Requires-Dist: numpy ; extra == 'docs'
+Requires-Dist: scipy (==1.4.1) ; extra == 'docs'
+Requires-Dist: six (==1.13.0) ; extra == 'docs'
+Requires-Dist: scikit-learn (==0.22.1) ; extra == 'docs'
+Requires-Dist: Pillow (>=6.0.0) ; extra == 'docs'
+Provides-Extra: gpy
+Requires-Dist: GPy ; extra == 'gpy'
+Provides-Extra: keras
+Requires-Dist: keras ; extra == 'keras'
+Requires-Dist: h5py ; extra == 'keras'
+Provides-Extra: lightgbm
+Requires-Dist: lightgbm ; extra == 'lightgbm'
+Provides-Extra: mxnet
+Requires-Dist: mxnet ; extra == 'mxnet'
+Provides-Extra: pytorch
+Requires-Dist: torch ; extra == 'pytorch'
+Requires-Dist: torchvision ; extra == 'pytorch'
+Provides-Extra: tensorflow
+Requires-Dist: tensorflow ; extra == 'tensorflow'
+Requires-Dist: tensorflow-addons ; extra == 'tensorflow'
+Requires-Dist: h5py ; extra == 'tensorflow'
+Provides-Extra: xgboost
+Requires-Dist: xgboost ; extra == 'xgboost'
+
+# Adversarial Robustness Toolbox (ART) v1.3
+<p align="center">
+  <img src="docs/images/art_logo_3d_1.png?raw=true" width="250" title="ART logo">
+</p>
+<br />
+
+[![Build Status](https://travis-ci.org/IBM/adversarial-robustness-toolbox.svg?branch=master)](https://travis-ci.org/IBM/adversarial-robustness-toolbox)
+[![Documentation Status](https://readthedocs.org/projects/adversarial-robustness-toolbox/badge/?version=latest)](http://adversarial-robustness-toolbox.readthedocs.io/en/latest/?badge=latest)
+[![GitHub version](https://badge.fury.io/gh/IBM%2Fadversarial-robustness-toolbox.svg)](https://badge.fury.io/gh/IBM%2Fadversarial-robustness-toolbox)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/IBM/adversarial-robustness-toolbox.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/IBM/adversarial-robustness-toolbox/context:python)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/IBM/adversarial-robustness-toolbox.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/IBM/adversarial-robustness-toolbox/alerts/)
+[![codecov](https://codecov.io/gh/IBM/adversarial-robustness-toolbox/branch/master/graph/badge.svg)](https://codecov.io/gh/IBM/adversarial-robustness-toolbox)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/adversarial-robustness-toolbox)](https://pypi.org/project/adversarial-robustness-toolbox/)
+[![slack-img](https://img.shields.io/badge/chat-on%20slack-yellow.svg)](https://ibm-art.slack.com/)
+
+[中文README请按此处](README-cn.md)
+
+Adversarial Robustness Toolbox (ART) is a Python library for Machine Learning Security. ART provides tools that enable
+developers and researchers to evaluate, defend, certify and verify Machine Learning models and applications against the
+adversarial threats of Evasion, Poisoning, Extraction, and Inference. ART supports all popular machine learning frameworks
+(TensorFlow, Keras, PyTorch, MXNet, scikit-learn, XGBoost, LightGBM, CatBoost, GPy, etc.), all data types
+(images, tables, audio, video, etc.) and machine learning tasks (classification, object detection, generation,
+certification, etc.).
+
+<p align="center">
+  <img src="docs/images/adversarial_threats_attacker.png?raw=true" width="400" title="ART logo">
+  <img src="docs/images/adversarial_threats_art.png?raw=true" width="400" title="ART logo">
+</p>
+<br />
+
+## Learn more
+
+| **[Get Started][get-started]**     | **[Documentation][documentation]**     | **[Contributing][contributing]**           |
+|-------------------------------------|-------------------------------|-----------------------------------|
+| - [Installation][installation]<br>- [Examples](examples/README.md)<br>- [Notebooks](notebooks/README.md) | - [Attacks][attacks]<br>- [Defences][defences]<br>- [Estimators][estimators]<br>- [Metrics][metrics]<br>- [Technical Documentation](https://adversarial-robustness-toolbox.readthedocs.io) | - [Slack](https://ibm-art.slack.com), [Invitation](https://join.slack.com/t/ibm-art/shared_invite/enQtMzkyOTkyODE4NzM4LTA4NGQ1OTMxMzFmY2Q1MzE1NWI2MmEzN2FjNGNjOGVlODVkZDE0MjA1NTA4OGVkMjVkNmQ4MTY1NmMyOGM5YTg)<br>- [Contributing](CONTRIBUTING.md)<br>- [Roadmap][roadmap]<br>- [Citing][citing] |
+
+[get-started]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/Get-Started
+[attacks]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/ART-Attacks
+[defences]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/ART-Defences
+[estimators]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/ART-Estimators
+[metrics]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/ART-Metrics
+[contributing]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/Contributing
+[documentation]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/Documentation
+[installation]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/Get-Started#setup
+[roadmap]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/Roadmap
+[citing]: https://github.com/IBM/adversarial-robustness-toolbox/wiki/Contributing#citing-art
+
+The library is under continuous development. Feedback, bug reports and contributions are very welcome!
+
+
