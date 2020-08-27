@@ -15,7 +15,7 @@ Edited version of `ART` package is added in `toolbox` folder.
 + When initializing the PytorchClassifier instance as done earlier give `ZOO-Adamm` flag as `True`. Currently there is a RuntimeError occuring as shown below.
 
 ![](https://github.com/sumanyumuku98/DriverAttack/blob/master/Screenshot_2020-08-27%20Playground%20-%20Jupyter%20Notebook.png)
-+ The changes in the `ART` toolbox has been done in `art/estimators/classification/pytorch.py` file. So error has to be resolved in this file only. Satya should look into this.
++ The changes in the `ART` toolbox has been done in `art/estimators/classification/pytorch.py` file. So error has to be resolved in this file only. Satya should look into this:
 # TODO
 + Train the model while cross validating and storing the weights
 + Adv Patch
