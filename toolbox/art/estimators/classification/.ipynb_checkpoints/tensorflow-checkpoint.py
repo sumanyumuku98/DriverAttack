@@ -664,18 +664,18 @@ class ZO_AdaMM(object):
         self.target_label = target_label
                
         
-        self.args={"maxiter"=timesteps,
-                   "init_const" = 10,
-                   "kappa" = 1e-10,
-                   "decay_lr" = True,
-                   "exp_code" = 50,
-                   "q" = 10,
-                   "mu"=0.05,
-                   "lr_idx" = 0,
-                   "lr" = 3e-4,
-                   "constraint" = 'cons',
-                   "decay_lr" = True,
-                   "arg_targeted_attack" = True}
+        self.args={"maxiter":timesteps,
+                   "init_const" : 10,
+                   "kappa" : 1e-10,
+                   "decay_lr" : True,
+                   "exp_code" : 50,
+                   "q" : 10,
+                   "mu":0.05,
+                   "lr_idx" : 0,
+                   "lr" : 3e-4,
+                   "constraint" : 'cons',
+                   "decay_lr" : True,
+                   "arg_targeted_attack" : True}
         
         
         # initialize the best solution & best loss
@@ -875,6 +875,7 @@ class TensorFlowV2Classifier(ClassGradientsMixin, ClassifierMixin, TensorFlowV2E
         preprocessing_defences: Union["Preprocessor", List["Preprocessor"], None] = None,
         postprocessing_defences: Union["Postprocessor", List["Postprocessor"], None] = None,
         preprocessing: PREPROCESSING_TYPE = (0, 1),
+        zoo_Adam:bool = False
     ) -> None:
         """
         Initialization specific to TensorFlow v2 models.
@@ -924,7 +925,8 @@ class TensorFlowV2Classifier(ClassGradientsMixin, ClassifierMixin, TensorFlowV2E
         self._input_shape = input_shape
         self._loss_object = loss_object
         self._train_step = train_step
-
+        self._zooAdamm = zoo_Adam
+        
         # Check if the loss function requires as input index labels instead of one-hot-encoded labels
         if isinstance(self._loss_object, tf.keras.losses.SparseCategoricalCrossentropy):
             self._reduce_labels = True
@@ -1144,7 +1146,6 @@ class TensorFlowV2Classifier(ClassGradientsMixin, ClassifierMixin, TensorFlowV2E
 
         else:
             raise NotImplementedError("Expecting eager execution.")
-
         return loss_grads
 
     def loss_gradient(self, x: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
@@ -1156,7 +1157,7 @@ class TensorFlowV2Classifier(ClassGradientsMixin, ClassifierMixin, TensorFlowV2E
         :return: Array of gradients of the same shape as `x`.
         """
         import tensorflow as tf  # lgtm [py/repeated-import]
-
+        print(self._zooAdamm)
         if self._loss_object is None:
             raise TypeError(
                 "The loss function `loss_object` is required for computing loss gradients, but it has not been "
@@ -1165,21 +1166,25 @@ class TensorFlowV2Classifier(ClassGradientsMixin, ClassifierMixin, TensorFlowV2E
 
         # Apply preprocessing
         x_preprocessed, _ = self._apply_preprocessing(x, y, fit=False)
+        if not self._zooAdamm:
+            if tf.executing_eagerly():
+                with tf.GradientTape() as tape:
+                    x_preprocessed_tf = tf.convert_to_tensor(x_preprocessed)
+                    tape.watch(x_preprocessed_tf)
+                    predictions = self._model(x_preprocessed_tf)
+                    if self._reduce_labels:
+                        loss = self._loss_object(np.argmax(y, axis=1), predictions)
+                    else:
+                        loss = self._loss_object(y, predictions)
 
-        if tf.executing_eagerly():
-            with tf.GradientTape() as tape:
-                x_preprocessed_tf = tf.convert_to_tensor(x_preprocessed)
-                tape.watch(x_preprocessed_tf)
-                predictions = self._model(x_preprocessed_tf)
-                if self._reduce_labels:
-                    loss = self._loss_object(np.argmax(y, axis=1), predictions)
-                else:
-                    loss = self._loss_object(y, predictions)
+                gradients = tape.gradient(loss, x_preprocessed_tf).numpy()
 
-            gradients = tape.gradient(loss, x_preprocessed_tf).numpy()
-
+            else:
+                raise NotImplementedError("Expecting eager execution.")
         else:
-            raise NotImplementedError("Expecting eager execution.")
+            zoo = ZO_AdaMM(x_preprocessed, self._model)
+            zoo.step()
+            gradients = zoo.gradFn()
 
         # Apply preprocessing gradients
         gradients = self._apply_preprocessing_gradient(x, gradients)
