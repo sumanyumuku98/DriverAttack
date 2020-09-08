@@ -346,12 +346,15 @@ class AdversarialPatchTensorFlowV2(EvasionAttack):
             0
         ]
         initial_value = np.ones(self.patch_shape) * mean_value
+        
         self._patch = tf.Variable(
             initial_value=initial_value,
             shape=self.patch_shape,
             dtype=tf.float32,
             constraint=lambda x: tf.clip_by_value(x, self.estimator.clip_values[0], self.estimator.clip_values[1]),
         )
+        
+
 
         self._train_op = tf.keras.optimizers.SGD(
             learning_rate=self.learning_rate, momentum=0.0, nesterov=False, name="SGD"
@@ -361,50 +364,81 @@ class AdversarialPatchTensorFlowV2(EvasionAttack):
         self.v_init = 1e-7
         self.dim = (1,)+self.image_shape
         self.beta_1 = 0.9
-        self.beta_2 = 0.999
-        self.m = np.zeros(self.dim)
-        self.v = self.v_init * np.ones(self.dim)
-        self.v_hat = self.v_init * np.ones(self.dim)
-        self.mu = 0.0001
+        self.beta_2 = np.random.uniform(1e-3,1e-2)
+
+        self.mu = 1.0
         self.zoo_lr = np.random.uniform(1e-3,1e-2)
-        self.zoo_timesteps = 1
+        self.zoo_timesteps = 10
         
-        self._zootrain_op = Adam(learning_rate=self.zoo_lr, beta_1 = self.beta_1, beta_2 = self.beta_2)
+        self._zootrain_op = Adam(learning_rate=self.learning_rate, beta_1 = self.beta_1, beta_2 = self.beta_2)
         
         
     def _zootrain_step(self, images: Optional[np.ndarray] = None, target: Optional[np.ndarray] = None) -> "tf.Tensor":
         import tensorflow as tf  # lgtm [py/repeated-import]
+        self.m = np.zeros(self.dim)
+        self.v = self.v_init * np.ones(self.dim)
+        self.v_hat = self.v_init * np.ones(self.dim)
+        delta_adv = 0
         for t in range(self.zoo_timesteps):
-            self.u = np.random.normal(0,1,self.dim)
+            self.u = np.random.uniform(0,1,self.dim)
             if target is None:
                 target = self.estimator.predict(x=images)
                 self.targeted = False
             else:
                 self.targeted = True
 
-            loss1 = self._zooloss(images, [0], target)
-            loss2 = self._zooloss(images , self.u * self.mu, target)
-            
-            del_fx = (np.prod(self.dim) / 2 * self.mu) * (loss2.numpy() - loss1.numpy()) * self.u
+
+            loss = (self._zooloss(images , self.u * self.mu, target) - self._zooloss(images, [0], target))
+
+
+            del_fx = (np.prod(self.dim) / self.mu) * (loss.numpy()) * self.u
+
             self.m = self.beta_1 * self.m + (1-self.beta_1) * del_fx
             self.v = self.beta_2 * self.v + (1-self.beta_2) * (del_fx**2)
             self.v_hat = np.maximum(self.v_hat, self.v)
+            adaptive_lr = self.learning_rate / (np.sqrt(self.v_hat))
+            gradients = (adaptive_lr * self.m)[0]
 
-            self._patch = self._patch   -  (self.learning_rate * self.m / (np.sqrt(self.v_hat) + 1e-8))[0]
-#             self._train_op.apply_gradients(zip(del_fx, [self._patch]))
-#             print(del_fx.min())
-#             print(del_fx.max())
-#             print('patch', self._patch)
+            delta_adv = delta_adv   -  gradients
+            tmp = delta_adv.copy()
+            V_temp = np.sqrt(self.v_hat.reshape(1,-1))
+            X = images.numpy().reshape(images.shape[0], np.prod(images.shape[1:]))
+            delta_adv = self.zooprojection_box(tmp, X, V_temp, 0, 255)
+            self._patch = tf.clip_by_value(self._patch + delta_adv, clip_value_min=self.estimator.clip_values[0], clip_value_max=self.estimator.clip_values[1])
+#             self._zootrain_op.apply_gradients(zip(gradients, [self._patch]))
+#             print(self._patch)
+#             print(gradients.min())
+#             print(gradients.max())
+#             print('patch', self._patch.numpy().reshape(1,-1))
+#         print(loss)
         
 
-        return loss1+loss2
+        return loss
 
+    
+    def zooprojection_box(self, a_point, X, Vt, lb, up):
+        ## X \in R^{d \times m}
+        #d_temp = a_point.size
+        VtX = np.sqrt(Vt)*X
+
+        min_VtX = np.min(VtX, axis=0)
+        max_VtX = np.max(VtX, axis=0)
+
+        Lb = lb * np.sqrt(Vt) - min_VtX
+        Ub = up * np.sqrt(Vt) - max_VtX
+
+        a_temp = np.sqrt(Vt)*a_point.reshape(1,-1)
+        z_proj_temp = np.multiply(Lb, np.less(a_temp, Lb)) + np.multiply(Ub, np.greater(a_temp, Ub)) \
+                      + np.multiply(a_temp, np.multiply( np.greater_equal(a_temp, Lb), np.less_equal(a_temp, Ub)))
+        #delta_proj = np.diag(1/np.diag(np.sqrt(Vt)))*z_proj_temp
+        delta_proj = 1/np.sqrt(Vt)*z_proj_temp
+        return delta_proj.reshape(a_point.shape)
     
     def _zooprobabilities(self, images: "tf.Tensor", changes) -> "tf.Tensor":
         import tensorflow as tf  # lgtm [py/repeated-import]
 
-        patched_input = self._random_overlay(images, self._patch + changes[0])
-
+        patched_input = self._random_overlay(images, tf.clip_by_value(self._patch + changes[0], clip_value_min=self.estimator.clip_values[0], clip_value_max=self.estimator.clip_values[1]))
+        
         patched_input = tf.clip_by_value(
             patched_input, clip_value_min=self.estimator.clip_values[0], clip_value_max=self.estimator.clip_values[1],
         )
@@ -440,7 +474,6 @@ class AdversarialPatchTensorFlowV2(EvasionAttack):
             loss = self._loss(images, target)
 
         gradients = tape.gradient(loss, [self._patch])
-
         if not self.targeted:
             gradients = [-g for g in gradients]          
             
@@ -579,7 +612,8 @@ class AdversarialPatchTensorFlowV2(EvasionAttack):
                 logger.info("Iteration: {} Loss: {}".format(i_iter, loss))
 
             i_iter += 1
-
+            
+            
         return (
             np.clip(self._patch.numpy(),0,255),
             self._get_circular_patch_mask(nb_images=1).numpy()[0],
@@ -594,6 +628,7 @@ class AdversarialPatchTensorFlowV2(EvasionAttack):
         :param patch_external: External patch to apply to images `x`.
         :return: The patched samples.
         """
+            
         patch = patch_external if patch_external is not None else np.clip(self._patch.numpy(),0,255)
         return self._random_overlay(images=x, patch=patch, scale=scale).numpy()
 
