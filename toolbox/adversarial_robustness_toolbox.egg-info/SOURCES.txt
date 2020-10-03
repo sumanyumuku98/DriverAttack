@@ -144,6 +144,8 @@ art/estimators/classification/pytorch.py
 art/estimators/classification/scikitlearn.py
 art/estimators/classification/tensorflow.py
 art/estimators/classification/xgboost.py
+art/estimators/classification/zoo_adamm_Utils.py
+art/estimators/classification/zoo_adamm_universal.py
 art/estimators/encoding/__init__.py
 art/estimators/encoding/encoder.py
 art/estimators/encoding/tensorflow.py
